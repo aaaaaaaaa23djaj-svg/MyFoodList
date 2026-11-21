@@ -1,0 +1,6 @@
+{
+  "name": "TableNote — TikTok Recipe Studio",
+  "description": "Convert TikTok cooking videos into structured, standardized recipes with visual and audio step-by-step instructions, ratings, sorting, and aesthetic culinary backgrounds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

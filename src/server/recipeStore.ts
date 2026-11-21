@@ -1,0 +1,447 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import type { Recipe, RecipeReview, RecipeStep, StandardizedIngredient } from '../types/recipe';
+import { standardizeIngredients } from '../utils/ingredients';
+
+const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DATA_FILE = path.join(DATA_DIR, 'recipes.json');
+
+const SEED_RECIPES: Recipe[] = [
+  {
+    id: 'seed-spicy-vodka-rigatoni',
+    title: 'Spicy Calabrian Vodka Rigatoni',
+    category: 'Pasta & Noodles',
+    tiktokUrl: 'https://www.tiktok.com/@nonnaskitchen/video/734918203412',
+    creatorHandle: '@nonnaskitchen',
+    thumbnailUrl: '/src/assets/images/dish_vodka_rigatoni_1795273625586.jpg',
+    prepMinutes: 10,
+    cookMinutes: 20,
+    servings: 4,
+    summary:
+      'Glossy, velvety tomato-cream sauce caramelized with shallots, Calabrian chili paste, and starchy pasta water until it coats every ridge.',
+    ingredients: [
+      { ingredient: 'rigatoni pasta', quantity: 450, unit: 'g' },
+      { ingredient: 'unsalted butter', quantity: 2, unit: 'tbsp' },
+      { ingredient: 'olive oil', quantity: 1, unit: 'tbsp' },
+      { ingredient: 'shallots', quantity: 2, unit: 'unit', notes: 'finely diced' },
+      { ingredient: 'garlic', quantity: 3, unit: 'clove', notes: 'minced' },
+      { ingredient: 'double concentrated tomato paste', quantity: 0.5, unit: 'cup' },
+      { ingredient: 'calabrian chili paste', quantity: 1.5, unit: 'tsp' },
+      { ingredient: 'vodka', quantity: 0.25, unit: 'cup' },
+      { ingredient: 'heavy cream', quantity: 0.75, unit: 'cup' },
+      { ingredient: 'parmesan', quantity: 0.75, unit: 'cup', notes: 'finely grated' },
+      { ingredient: 'fresh basil', quantity: 1, unit: 'handful', notes: 'torn' },
+      { ingredient: 'kosher salt', quantity: null, unit: 'to taste' },
+    ],
+    steps: [
+      {
+        stepNumber: 1,
+        instruction:
+          'Bring a large pot of generously salted water to a rolling boil and cook the rigatoni 2 minutes short of al dente, reserving 1 cup of starchy pasta water.',
+        cueSource: 'audio',
+        timestampHint: '0:04',
+        durationMinutes: 9,
+      },
+      {
+        stepNumber: 2,
+        instruction:
+          'Warm olive oil and 1 tbsp butter over medium heat, then sauté diced shallots and minced garlic for 3 minutes until translucent without browning.',
+        cueSource: 'visual',
+        timestampHint: '0:12',
+        durationMinutes: 3,
+      },
+      {
+        stepNumber: 3,
+        instruction:
+          'Add tomato paste and Calabrian chili paste, stirring continuously for 4 minutes until the paste darkens to a deep brick red and coats the bottom of the pan.',
+        cueSource: 'visual',
+        timestampHint: '0:21',
+        durationMinutes: 4,
+      },
+      {
+        stepNumber: 4,
+        instruction:
+          'Deglaze the pan with vodka, scraping up browned bits as the alcohol cooks off for 60 seconds, then stream in heavy cream while whisking gently.',
+        cueSource: 'audio',
+        timestampHint: '0:30',
+        durationMinutes: 2,
+      },
+      {
+        stepNumber: 5,
+        instruction:
+          'Toss the par-cooked rigatoni into the sauce with the remaining 1 tbsp cold butter, grated parmesan, and splashes of pasta water until glossy. Finish with torn basil.',
+        cueSource: 'visual',
+        timestampHint: '0:42',
+        durationMinutes: 2,
+      },
+    ],
+    reviews: [
+      {
+        id: 'rev-1',
+        authorName: 'Clara Vance',
+        rating: 5,
+        comment:
+          'Caramelizing the tomato paste until brick red made all the difference. Emulsified like a restaurant dish.',
+        createdAt: '2026-11-15T18:30:00.000Z',
+      },
+      {
+        id: 'rev-2',
+        authorName: 'Marco Bellini',
+        rating: 5,
+        comment:
+          'Balanced heat from the Calabrian chili and silky finish with the cold butter at the end.',
+        createdAt: '2026-11-18T12:15:00.000Z',
+      },
+    ],
+    extractionSource: 'video-multimodal',
+    createdAt: '2026-11-14T16:00:00.000Z',
+    updatedAt: '2026-11-18T12:15:00.000Z',
+  },
+  {
+    id: 'seed-iced-strawberry-matcha',
+    title: 'Layered Iced Strawberry Matcha',
+    category: 'Drinks & Matcha',
+    tiktokUrl: 'https://www.tiktok.com/@whiskandfoam/video/735104921847',
+    creatorHandle: '@whiskandfoam',
+    thumbnailUrl: '/src/assets/images/dish_strawberry_matcha_1795273625584.jpg',
+    prepMinutes: 8,
+    cookMinutes: 0,
+    servings: 1,
+    summary:
+      'Macerated fresh strawberries layered beneath chilled oat milk and hand-whisked ceremonial matcha crema.',
+    ingredients: [
+      { ingredient: 'fresh strawberries', quantity: 4, unit: 'unit', notes: 'hulled and diced' },
+      { ingredient: 'maple syrup', quantity: 1.5, unit: 'tsp' },
+      { ingredient: 'ceremonial matcha powder', quantity: 2, unit: 'tsp', notes: 'sifted' },
+      { ingredient: 'hot water', quantity: 60, unit: 'ml', notes: '175°F / 80°C' },
+      { ingredient: 'oat milk', quantity: 0.75, unit: 'cup', notes: 'chilled' },
+      { ingredient: 'ice cubes', quantity: 1, unit: 'cup' },
+    ],
+    steps: [
+      {
+        stepNumber: 1,
+        instruction:
+          'Muddle diced strawberries with maple syrup directly in the bottom of a tall fluted glass until a jammy ruby puree forms.',
+        cueSource: 'visual',
+        timestampHint: '0:03',
+        durationMinutes: 2,
+      },
+      {
+        stepNumber: 2,
+        instruction:
+          'Sift ceremonial matcha into a bowl, add 60 ml hot water, and whisk vigorously in a W-motion with a bamboo chasen for 25 seconds until microfoam appears.',
+        cueSource: 'audio',
+        timestampHint: '0:11',
+        durationMinutes: 2,
+      },
+      {
+        stepNumber: 3,
+        instruction:
+          'Pack the glass over the strawberry layer with ice cubes and slowly pour chilled oat milk down the side to preserve crisp stratification.',
+        cueSource: 'visual',
+        timestampHint: '0:22',
+        durationMinutes: 1,
+      },
+      {
+        stepNumber: 4,
+        instruction:
+          'Float the whisked matcha crema gently over the back of a spoon onto the milk layer and garnish with a fresh strawberry slice.',
+        cueSource: 'visual',
+        timestampHint: '0:31',
+        durationMinutes: 1,
+      },
+    ],
+    reviews: [
+      {
+        id: 'rev-3',
+        authorName: 'Hana Takahashi',
+        rating: 5,
+        comment:
+          'Sifting the matcha first eliminated every single clump. Looks like a cafe pour.',
+        createdAt: '2026-11-16T09:20:00.000Z',
+      },
+      {
+        id: 'rev-4',
+        authorName: 'Devon Ortiz',
+        rating: 4,
+        comment: 'Delicious and not overly sweet. Added a tiny pinch of vanilla extract.',
+        createdAt: '2026-11-19T14:45:00.000Z',
+      },
+    ],
+    extractionSource: 'video-multimodal',
+    createdAt: '2026-11-15T10:30:00.000Z',
+    updatedAt: '2026-11-19T14:45:00.000Z',
+  },
+  {
+    id: 'seed-crispy-rice-salmon',
+    title: 'Crispy Rice Spicy Salmon Bites',
+    category: 'Seafood & Sushi',
+    tiktokUrl: 'https://www.tiktok.com/@tokyoplate/video/736029184712',
+    creatorHandle: '@tokyoplate',
+    thumbnailUrl: '/src/assets/images/dish_crispy_rice_salmon_1795273623931.jpg',
+    prepMinutes: 20,
+    cookMinutes: 12,
+    servings: 4,
+    summary:
+      'Pan-crisped seasoned sushi rice squares crowned with sriracha-kewpie diced salmon, avocado ribbons, and toasted sesame.',
+    ingredients: [
+      { ingredient: 'sushi rice', quantity: 1.5, unit: 'cup', notes: 'cooked and seasoned' },
+      { ingredient: 'rice vinegar', quantity: 2, unit: 'tbsp' },
+      { ingredient: 'sushi-grade salmon', quantity: 220, unit: 'g', notes: 'finely diced' },
+      { ingredient: 'kewpie mayonnaise', quantity: 2, unit: 'tbsp' },
+      { ingredient: 'sriracha', quantity: 1, unit: 'tbsp' },
+      { ingredient: 'toasted sesame oil', quantity: 1, unit: 'tsp' },
+      { ingredient: 'avocado', quantity: 0.5, unit: 'unit', notes: 'thinly sliced' },
+      { ingredient: 'neutral frying oil', quantity: 3, unit: 'tbsp' },
+      { ingredient: 'sesame seeds', quantity: 1, unit: 'tsp' },
+    ],
+    steps: [
+      {
+        stepNumber: 1,
+        instruction:
+          'Fold rice vinegar into warm sushi rice, press firmly into a parchment-lined square pan, and chill 20 minutes until compact enough to slice into 8 squares.',
+        cueSource: 'caption',
+        timestampHint: '0:05',
+        durationMinutes: 5,
+      },
+      {
+        stepNumber: 2,
+        instruction:
+          'Whisk diced salmon with Kewpie mayo, sriracha, and sesame oil in a chilled bowl until evenly coated.',
+        cueSource: 'visual',
+        timestampHint: '0:15',
+        durationMinutes: 3,
+      },
+      {
+        stepNumber: 3,
+        instruction:
+          'Shallow-fry rice squares in hot neutral oil for 3 to 4 minutes per side until deeply golden and audibly crisp when tapped with chopsticks.',
+        cueSource: 'audio',
+        timestampHint: '0:27',
+        durationMinutes: 8,
+      },
+      {
+        stepNumber: 4,
+        instruction:
+          'Drain briefly on a wire rack, then crown each warm crispy rice tile with spicy salmon, an avocado crescent, and toasted sesame seeds.',
+        cueSource: 'visual',
+        timestampHint: '0:39',
+        durationMinutes: 2,
+      },
+    ],
+    reviews: [
+      {
+        id: 'rev-5',
+        authorName: 'Elena Park',
+        rating: 5,
+        comment: 'Pressing and chilling the rice made the squares hold together perfectly in the pan.',
+        createdAt: '2026-11-17T20:10:00.000Z',
+      },
+    ],
+    extractionSource: 'video-multimodal',
+    createdAt: '2026-11-16T19:00:00.000Z',
+    updatedAt: '2026-11-17T20:10:00.000Z',
+  },
+  {
+    id: 'seed-brown-butter-cookies',
+    title: 'Sea Salt Brown Butter Chunk Cookies',
+    category: 'Desserts & Baking',
+    tiktokUrl: 'https://www.tiktok.com/@crumbatelier/video/736881029344',
+    creatorHandle: '@crumbatelier',
+    thumbnailUrl: '/src/assets/images/dish_brown_butter_cookies_1795273625653.jpg',
+    prepMinutes: 15,
+    cookMinutes: 12,
+    servings: 12,
+    summary:
+      'Nutty toasted-milk-solid brown butter folded with dark chocolate shards, crisp lacy edges, and flaky Maldon sea salt.',
+    ingredients: [
+      { ingredient: 'unsalted butter', quantity: 170, unit: 'g' },
+      { ingredient: 'dark brown sugar', quantity: 0.75, unit: 'cup', notes: 'packed' },
+      { ingredient: 'granulated sugar', quantity: 0.33, unit: 'cup' },
+      { ingredient: 'large egg', quantity: 1, unit: 'unit', notes: 'room temperature' },
+      { ingredient: 'vanilla extract', quantity: 2, unit: 'tsp' },
+      { ingredient: 'flour', quantity: 1.5, unit: 'cup' },
+      { ingredient: 'baking soda', quantity: 0.5, unit: 'tsp' },
+      { ingredient: 'dark chocolate chunks', quantity: 180, unit: 'g', notes: '70% cacao' },
+      { ingredient: 'flaky sea salt', quantity: 1, unit: 'tsp' },
+    ],
+    steps: [
+      {
+        stepNumber: 1,
+        instruction:
+          'Melt butter over medium heat, swirling until it foams, subsides, and turns amber with fragrant toasted milk solids, then cool 10 minutes.',
+        cueSource: 'visual',
+        timestampHint: '0:06',
+        durationMinutes: 6,
+      },
+      {
+        stepNumber: 2,
+        instruction:
+          'Whisk cooled brown butter with brown sugar and granulated sugar for 1 minute, then beat in the egg and vanilla until glossy and ribbon-like.',
+        cueSource: 'audio',
+        timestampHint: '0:17',
+        durationMinutes: 3,
+      },
+      {
+        stepNumber: 3,
+        instruction:
+          'Fold in flour and baking soda gently until just combined, then stir through chopped dark chocolate chunks.',
+        cueSource: 'visual',
+        timestampHint: '0:26',
+        durationMinutes: 2,
+      },
+      {
+        stepNumber: 4,
+        instruction:
+          'Scoop onto parchment-lined trays and bake at 350°F (175°C) for 11 minutes until edges are golden and centers look slightly underbaked. Shower with flaky sea salt immediately.',
+        cueSource: 'caption',
+        timestampHint: '0:38',
+        durationMinutes: 12,
+      },
+    ],
+    reviews: [
+      {
+        id: 'rev-6',
+        authorName: 'Julian Reed',
+        rating: 5,
+        comment: 'The nutty brown butter aroma alone is unreal. Chewy centers every time.',
+        createdAt: '2026-11-19T17:05:00.000Z',
+      },
+      {
+        id: 'rev-7',
+        authorName: 'Sienna Patel',
+        rating: 4,
+        comment: 'Great ratio of chocolate to dough—chilling the dough 20 minutes made them even thicker.',
+        createdAt: '2026-11-20T11:30:00.000Z',
+      },
+    ],
+    extractionSource: 'video-multimodal',
+    createdAt: '2026-11-17T14:00:00.000Z',
+    updatedAt: '2026-11-20T11:30:00.000Z',
+  },
+];
+
+function ensureStore(): Recipe[] {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_RECIPES, null, 2), 'utf-8');
+    return SEED_RECIPES;
+  }
+  try {
+    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // Re-seed if file corrupted
+  }
+  fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_RECIPES, null, 2), 'utf-8');
+  return SEED_RECIPES;
+}
+
+function saveStore(recipes: Recipe[]): void {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  fs.writeFileSync(DATA_FILE, JSON.stringify(recipes, null, 2), 'utf-8');
+}
+
+export function listRecipes(): Recipe[] {
+  return ensureStore();
+}
+
+export function getRecipeById(id: string): Recipe | undefined {
+  return ensureStore().find((r) => r.id === id);
+}
+
+export function createRecipe(recipe: Recipe): Recipe {
+  const recipes = ensureStore();
+  recipes.unshift(recipe);
+  saveStore(recipes);
+  return recipe;
+}
+
+export function updateRecipe(
+  id: string,
+  patch: Partial<{
+    title: string;
+    category: string;
+    summary: string;
+    prepMinutes: number;
+    cookMinutes: number;
+    servings: number;
+    ingredients: StandardizedIngredient[];
+    steps: RecipeStep[];
+  }>
+): Recipe | null {
+  const recipes = ensureStore();
+  const idx = recipes.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+
+  const current = recipes[idx];
+  const updated: Recipe = {
+    ...current,
+    ...(patch.title !== undefined ? { title: patch.title.trim() || current.title } : {}),
+    ...(patch.category !== undefined ? { category: patch.category.trim() || current.category } : {}),
+    ...(patch.summary !== undefined ? { summary: patch.summary.trim() } : {}),
+    ...(patch.prepMinutes !== undefined ? { prepMinutes: Math.max(0, Number(patch.prepMinutes) || 0) } : {}),
+    ...(patch.cookMinutes !== undefined ? { cookMinutes: Math.max(0, Number(patch.cookMinutes) || 0) } : {}),
+    ...(patch.servings !== undefined ? { servings: Math.max(1, Number(patch.servings) || 1) } : {}),
+    ...(patch.ingredients !== undefined
+      ? { ingredients: standardizeIngredients(patch.ingredients) }
+      : {}),
+    ...(patch.steps !== undefined
+      ? {
+          steps: patch.steps.map((s, i) => ({
+            ...s,
+            stepNumber: i + 1,
+          })),
+        }
+      : {}),
+    updatedAt: new Date().toISOString(),
+  };
+
+  recipes[idx] = updated;
+  saveStore(recipes);
+  return updated;
+}
+
+export function deleteRecipe(id: string): boolean {
+  const recipes = ensureStore();
+  const next = recipes.filter((r) => r.id !== id);
+  if (next.length === recipes.length) return false;
+  saveStore(next);
+  return true;
+}
+
+export function addRecipeReview(
+  recipeId: string,
+  input: { authorName: string; rating: number; comment: string }
+): Recipe | null {
+  const recipes = ensureStore();
+  const idx = recipes.findIndex((r) => r.id === recipeId);
+  if (idx === -1) return null;
+
+  const cleanRating = Math.min(5, Math.max(1, Math.round(input.rating)));
+  const newReview: RecipeReview = {
+    id: `rev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    authorName: input.authorName.trim() || 'Home Cook',
+    rating: cleanRating,
+    comment: input.comment.trim(),
+    createdAt: new Date().toISOString(),
+  };
+
+  const current = recipes[idx];
+  const updated: Recipe = {
+    ...current,
+    reviews: [newReview, ...current.reviews],
+    updatedAt: new Date().toISOString(),
+  };
+
+  recipes[idx] = updated;
+  saveStore(recipes);
+  return updated;
+}
